@@ -95,8 +95,8 @@ ApplicationImpl::ApplicationImpl(VirtualClock& clock, Config const& cfg)
               ? std::make_unique<asio::io_context::work>(*mEvictionIOContext)
               : nullptr)
     , mOverlayIOContext(mConfig.EXPERIMENTAL_BACKGROUND_OVERLAY_PROCESSING
-                            ? std::make_optional<asio::io_context>(1)
-                            : std::nullopt)
+                            ? std::make_unique<asio::io_context>(1)
+                            : nullptr)
     , mOverlayWork(mOverlayIOContext ? std::make_unique<asio::io_context::work>(
                                            *mOverlayIOContext)
                                      : nullptr)
@@ -758,6 +758,13 @@ ApplicationImpl::validateAndLogConfig()
             Bucket,
             "in-memory mode is enabled. This feature is deprecated! Node "
             "may see performance degredation and lose sync with the network.");
+    }
+    if (!mDatabase->isSqlite())
+    {
+        CLOG_WARNING(Database,
+                     "Non-sqlite3 database detected. Support for other sql "
+                     "backends is deprecated and will be removed in a future "
+                     "release. Please use sqlite3 for non-ledger state data.");
     }
 
     if (mConfig.DEPRECATED_SQL_LEDGER_STATE)
